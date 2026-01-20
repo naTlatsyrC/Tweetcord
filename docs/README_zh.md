@@ -39,7 +39,7 @@ Tweetcord是一個Discord機器人，它使用[tweety-ns](https://github.com/mah
 
    </summary>
 
-👉 `/add notifier` `username` `channel` | `mention` `type` `media_type` `account_used`
+👉 `/add notifier` `username` `channel` | `mention` `type` `media_type` `account_used` `filter`
 
 | 參數 | 類型 | 描述 |
 |------|------|-----|
@@ -49,6 +49,7 @@ Tweetcord是一個Discord機器人，它使用[tweety-ns](https://github.com/mah
 | `type` | str | 設定是否啟用轉推和引用的通知 |
 | `media_type` | str | 設定是否啟用包含多媒體的通知，或僅啟用包含多媒體的通知 |
 | `account_used` | str | 用來追蹤用戶推文的Twitter客戶端 |
+| `filter` | str | 可選的文字過濾器 - 僅發送包含此文字的貼文（不區分大小寫） |
 
 👉 `/remove notifier` `channel` `username`
 

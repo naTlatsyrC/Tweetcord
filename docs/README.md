@@ -39,7 +39,7 @@ Tweetcord is a Discord bot that leverages the [tweety-ns module](https://github.
 
    </summary>
 
-👉 `/add notifier` `username` `channel` | `mention` `type` `media_type` `account_used`
+👉 `/add notifier` `username` `channel` | `mention` `type` `media_type` `account_used` `filter`
 
 | Parameter | Type | Description |
 | --------- | ---- | ----------- |
@@ -49,6 +49,7 @@ Tweetcord is a Discord bot that leverages the [tweety-ns module](https://github.
 | `type` | str | Whether to enable notifications for retweets & quotes |
 | `media_type` | str | Whether to enable notifications that include media, or only enable notifications that include media |
 | `account_used` | str | The twitter client used by the bot to monitor the user's tweets |
+| `filter` | str | Optional text filter - only posts containing this text will be sent (case-insensitive) |
 
 👉 `/remove notifier` `channel` `username`
 

@@ -40,7 +40,7 @@ class Notification(Cog_Extension):
         account_used=[app_commands.Choice(name=account_name, value=account_name) for account_name, _ in get_accounts().items()]
     )
     @app_commands.rename(enable_type='type')
-    async def notifier(self, itn: discord.Interaction, username: str, channel: discord.TextChannel, mention: discord.Role = None, enable_type: str = '11', media_type: str = '11', account_used: str = list(get_accounts().keys())[0]):
+    async def notifier(self, itn: discord.Interaction, username: str, channel: discord.TextChannel, mention: discord.Role = None, enable_type: str = '11', media_type: str = '11', account_used: str = list(get_accounts().keys())[0], filter: str = None):
         """Add a twitter user to specific channel on your server.
 
         Parameters
@@ -57,6 +57,8 @@ class Notification(Cog_Extension):
             Whether to enable notifications for All Tweets, Tweets with Media, or Tweets without Media Only.
         account_used: str
             The account used to deliver notifications.
+        filter: str
+            Optional text filter - only posts containing this text will be sent.
         """
 
         await itn.response.defer(ephemeral=True)
@@ -87,7 +89,7 @@ class Notification(Cog_Extension):
                                 await db.execute('BEGIN')
                                 await cursor.execute('INSERT INTO user (id, username, lastest_tweet, client_used) VALUES (?, ?, ?, ?)', (str(new_user.id), new_user.username, get_utcnow(), account_used))
                                 await cursor.execute('INSERT OR IGNORE INTO channel VALUES (?, ?)', (str(channel.id), server_id))
-                                await cursor.execute('INSERT INTO notification (user_id, channel_id, role_id, enable_type, enable_media_type) VALUES (?, ?, ?, ?, ?)', (str(new_user.id), str(channel.id), roleID, enable_type, media_type))
+                                await cursor.execute('INSERT INTO notification (user_id, channel_id, role_id, enable_type, enable_media_type, text_filter) VALUES (?, ?, ?, ?, ?, ?)', (str(new_user.id), str(channel.id), roleID, enable_type, media_type, filter))
                                 await db.commit()
                         else:
                             is_changed_client = False
@@ -121,7 +123,7 @@ class Notification(Cog_Extension):
                                 if is_changed_client:
                                     await cursor.execute('REPLACE INTO user (client_used) VALUES (?) WHERE id = ?', (account_used, match_user['id']))
                                 await cursor.execute('INSERT OR IGNORE INTO channel VALUES (?, ?)', (str(channel.id), server_id))
-                                await cursor.execute('REPLACE INTO notification (user_id, channel_id, role_id, enable_type, enable_media_type) VALUES (?, ?, ?, ?, ?)', (match_user['id'], str(channel.id), roleID, enable_type, media_type))
+                                await cursor.execute('REPLACE INTO notification (user_id, channel_id, role_id, enable_type, enable_media_type, text_filter) VALUES (?, ?, ?, ?, ?, ?)', (match_user['id'], str(channel.id), roleID, enable_type, media_type, filter))
                                 await cursor.execute('UPDATE user SET enabled = 1 WHERE id = ?', (match_user['id'],))
                                 await db.commit()
 
@@ -136,7 +138,7 @@ class Notification(Cog_Extension):
                         async with lock:
                             await db.execute('BEGIN')
                             await cursor.execute('INSERT OR IGNORE INTO channel VALUES (?, ?)', (str(channel.id), server_id))
-                            await cursor.execute('REPLACE INTO notification (user_id, channel_id, role_id, enable_type, enable_media_type) VALUES (?, ?, ?, ?, ?)', (match_user['id'], str(channel.id), roleID, enable_type, media_type))
+                            await cursor.execute('REPLACE INTO notification (user_id, channel_id, role_id, enable_type, enable_media_type, text_filter) VALUES (?, ?, ?, ?, ?, ?)', (match_user['id'], str(channel.id), roleID, enable_type, media_type, filter))
                             await db.commit()
                 except Exception as e:
                     log.error(f'an error occurred while adding notifier: {e}')
