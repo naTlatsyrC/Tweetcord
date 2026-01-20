@@ -171,7 +171,7 @@ class AccountTracker():
                 
                 for data in notifications:
                     channel = self.bot.get_channel(int(data['channel_id']))
-                    if channel is not None and is_match_type(tweet, data['enable_type']) and is_match_media_type(tweet, data['enable_media_type']) and is_match_text_filter(tweet, data.get('text_filter')):
+                    if channel is not None and is_match_type(tweet, data['enable_type']) and is_match_media_type(tweet, data['enable_media_type']) and is_match_text_filter(tweet, data['text_filter']):
                         try:
                             mention = f"{channel.guild.get_role(int(data['role_id'])).mention} " if data['role_id'] else ''
                             author, action = tweet.author.name, get_action(tweet)
