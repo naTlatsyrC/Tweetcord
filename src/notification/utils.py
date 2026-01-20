@@ -22,9 +22,13 @@ def is_match_text_filter(tweet: Tweet, text_filter: str):
     # Get the tweet text - handle both original tweets and retweets
     tweet_text = tweet.text if tweet.text else ""
     
-    # Use word boundary matching for exact word/hashtag matching
-    # This ensures "#Stream" matches "#Stream" but not "#Streaming"
-    pattern = r'\b' + re.escape(text_filter) + r'\b'
+    # Handle hashtags and special characters - match as whole words
+    # For hashtags like #Stream, we want to match #Stream but not #Streaming
+    escaped_filter = re.escape(text_filter)
+    
+    # Use word boundary only after the text, and ensure we're not in the middle of a word
+    # This pattern matches if the filter appears and is followed by a non-word character or end of string
+    pattern = r'(?<![#\w])' + escaped_filter + r'(?![#\w])'
     return bool(re.search(pattern, tweet_text, re.IGNORECASE))
 
 
