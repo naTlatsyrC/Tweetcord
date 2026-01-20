@@ -14,7 +14,7 @@ def is_match_media_type(tweet: Tweet, media_type: str):
 
 
 def is_match_text_filter(tweet: Tweet, text_filter: str):
-    """Check if the tweet text contains the filter string (case-insensitive).
+    """Check if the tweet text contains the filter string as a whole word (case-insensitive).
     If text_filter is None or empty, return True (no filtering)."""
     if not text_filter:
         return True
@@ -22,8 +22,10 @@ def is_match_text_filter(tweet: Tweet, text_filter: str):
     # Get the tweet text - handle both original tweets and retweets
     tweet_text = tweet.text if tweet.text else ""
     
-    # Case-insensitive search
-    return text_filter.lower() in tweet_text.lower()
+    # Use word boundary matching for exact word/hashtag matching
+    # This ensures "#Stream" matches "#Stream" but not "#Streaming"
+    pattern = r'\b' + re.escape(text_filter) + r'\b'
+    return bool(re.search(pattern, tweet_text, re.IGNORECASE))
 
 
 def replace_emoji(match: re.Match, guild: discord.Guild):
