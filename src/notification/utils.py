@@ -14,7 +14,8 @@ def is_match_media_type(tweet: Tweet, media_type: str):
 
 
 def is_match_text_filter(tweet: Tweet, text_filter: str):
-    """Check if the tweet text contains the filter string as a whole word (case-insensitive).
+    """Check if the tweet text contains any of the filter strings as whole words (case-insensitive).
+    Supports multiple filters separated by commas (match any).
     If text_filter is None or empty, return True (no filtering)."""
     if not text_filter:
         return True
@@ -22,14 +23,22 @@ def is_match_text_filter(tweet: Tweet, text_filter: str):
     # Get the tweet text - handle both original tweets and retweets
     tweet_text = tweet.text if tweet.text else ""
     
-    # Handle hashtags and special characters - match as whole words
-    # For hashtags like #Stream, we want to match #Stream but not #Streaming
-    escaped_filter = re.escape(text_filter)
+    # Split by comma to support multiple filters (match any)
+    filters = [f.strip() for f in text_filter.split(',') if f.strip()]
     
-    # Use word boundary only after the text, and ensure we're not in the middle of a word
-    # This pattern matches if the filter appears and is followed by a non-word character or end of string
-    pattern = r'(?<![#\w])' + escaped_filter + r'(?![#\w])'
-    return bool(re.search(pattern, tweet_text, re.IGNORECASE))
+    # Check if any filter matches
+    for filter_word in filters:
+        # Handle hashtags and special characters - match as whole words
+        # For hashtags like #Stream, we want to match #Stream but not #Streaming
+        escaped_filter = re.escape(filter_word)
+        
+        # Use word boundary only after the text, and ensure we're not in the middle of a word
+        # This pattern matches if the filter appears and is followed by a non-word character or end of string
+        pattern = r'(?<![#\w])' + escaped_filter + r'(?![#\w])'
+        if re.search(pattern, tweet_text, re.IGNORECASE):
+            return True
+    
+    return False
 
 
 def replace_emoji(match: re.Match, guild: discord.Guild):

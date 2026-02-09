@@ -58,7 +58,7 @@ class Notification(Cog_Extension):
         account_used: str
             The account used to deliver notifications.
         filter: str
-            Optional text filter - only posts containing this text will be sent.
+            Optional text filter - only posts containing this text will be sent. Supports multiple filters separated by commas (matches any, case-insensitive).
         """
 
         await itn.response.defer(ephemeral=True)
