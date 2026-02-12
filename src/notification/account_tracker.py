@@ -180,6 +180,19 @@ class AccountTracker():
                         if not type_match:
                             log.debug(f"tweet from {username} filtered: type mismatch (is_retweet={tweet.is_retweet}, is_quoted={tweet.is_quoted}, enable_type={data['enable_type']})")
                         if not media_match:
+                            log.debug(f"tweet from {username} filtered: media mismatch (has_media={len(tweet.media) > 0}, enable_media_type={data['enable_media_type']})")
+                        if not text_match:
+                            log.debug(f"tweet from {username} filtered: text mismatch (filter={data['text_filter']}, tweet_text={tweet.text[:100]})")
+                        
+                        if type_match and media_match and text_match:
+                            try:
+                                mention = f"{channel.guild.get_role(int(data['role_id'])).mention} " if data['role_id'] else ''
+                                author, action = tweet.author.name, get_action(tweet)
+                                
+                                if not data['customized_msg']: msg = configs['default_message']
+                                else: msg = re.sub(r":(\w+):", lambda match: replace_emoji(match, channel.guild), data['customized_msg']) if configs['emoji_auto_format'] else data['customized_msg']
+                                msg = msg.format(mention=mention, author=author, action=action, url=url)
+
                                 if EMBED_TYPE == 'proxy':
                                     await channel.send(msg, view=view)
                                 else:
@@ -189,20 +202,7 @@ class AccountTracker():
 
                             except Exception as e:
                                 if not isinstance(e, discord.errors.Forbidden):
-                                if not data['customized_msg']: msg = configs['default_message']
-                            else: msg = re.sub(r":(\w+):", lambda match: replace_emoji(match, channel.guild), data['customized_msg']) if configs['emoji_auto_format'] else data['customized_msg']
-                            msg = msg.format(mention=mention, author=author, action=action, url=url)
-
-                            if EMBED_TYPE == 'proxy':
-                                await channel.send(msg, view=view)
-                            else:
-                                footer = 'twitter.png' if configs['embed']['built_in']['legacy_logo'] else 'x.png'
-                                file = discord.File(f'images/{footer}', filename='footer.png')
-                                await channel.send(msg, file=file, embeds=await gen_embed(tweet), view=view)
-
-                        except Exception as e:
-                            if not isinstance(e, discord.errors.Forbidden):
-                                log.error(f'an error occurred at {channel.mention} while sending notification: {e}')
+                                    log.error(f'an error occurred at {channel.mention} while sending notification: {e}')
 
     async def tweetsUpdater(self, app: Twitter):
         updater_name = asyncio.current_task().get_name().split('_', 1)[1]
