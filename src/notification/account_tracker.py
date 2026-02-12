@@ -150,7 +150,7 @@ class AccountTracker():
                 continue
 
             for tweet in lastest_tweets:
-                log.info(f'find a new tweet from {username}')
+                log.info(f'find a new tweet from {username} (posted at {tweet.created_on})')
                 url = tweet.url
                 if EMBED_TYPE == 'proxy':
                     url = url.replace('twitter', DOMAIN_NAME)
@@ -171,12 +171,25 @@ class AccountTracker():
                 
                 for data in notifications:
                     channel = self.bot.get_channel(int(data['channel_id']))
-                    if channel is not None and is_match_type(tweet, data['enable_type']) and is_match_media_type(tweet, data['enable_media_type']) and is_match_text_filter(tweet, data['text_filter']):
-                        try:
-                            mention = f"{channel.guild.get_role(int(data['role_id'])).mention} " if data['role_id'] else ''
-                            author, action = tweet.author.name, get_action(tweet)
-                            
-                            if not data['customized_msg']: msg = configs['default_message']
+                    if channel is not None:
+                        # Check each filter condition and log why a tweet might be filtered out
+                        type_match = is_match_type(tweet, data['enable_type'])
+                        media_match = is_match_media_type(tweet, data['enable_media_type'])
+                        text_match = is_match_text_filter(tweet, data['text_filter'])
+                        
+                        if not type_match:
+                            log.debug(f"tweet from {username} filtered: type mismatch (is_retweet={tweet.is_retweet}, is_quoted={tweet.is_quoted}, enable_type={data['enable_type']})")
+                        if not media_match:
+                                if EMBED_TYPE == 'proxy':
+                                    await channel.send(msg, view=view)
+                                else:
+                                    footer = 'twitter.png' if configs['embed']['built_in']['legacy_logo'] else 'x.png'
+                                    file = discord.File(f'images/{footer}', filename='footer.png')
+                                    await channel.send(msg, file=file, embeds=await gen_embed(tweet), view=view)
+
+                            except Exception as e:
+                                if not isinstance(e, discord.errors.Forbidden):
+                                if not data['customized_msg']: msg = configs['default_message']
                             else: msg = re.sub(r":(\w+):", lambda match: replace_emoji(match, channel.guild), data['customized_msg']) if configs['emoji_auto_format'] else data['customized_msg']
                             msg = msg.format(mention=mention, author=author, action=action, url=url)
 
@@ -196,10 +209,13 @@ class AccountTracker():
         while True:
             try:
                 # Run the potentially blocking library call in a separate thread
-                self.tweets[updater_name] = await asyncio.to_thread(app.get_tweet_notifications)
+                tweets_fetched = await asyncio.to_thread(app.get_tweet_notifications)
+                self.tweets[updater_name] = tweets_fetched
+                log.debug(f"tweets updater {updater_name}: fetched {len(tweets_fetched)} notifications")
             except KeyError as e:
                 # Handle the error thrown by `tweety-ns` mentioned in issue#59
                 log.warning(f"handled KeyError in {updater_name}: {e}. This is likely a temporary API response issue from Twitter. Skipping this check.")
+                log.warning(f"tweets updater {updater_name}: SKIPPED CHECK CYCLE - some tweets may be missed")
             except Exception as e:
                 log.error(f'{e} (task : tweets updater {updater_name})')
                 log.error(f"an unexpected error occurred, try again in {configs['tweets_updater_retry_delay']} minutes")
