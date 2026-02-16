@@ -63,12 +63,16 @@ def setup_logger(module_name: str) -> logging.Logger:
     # create logger
     library, _, _ = module_name.partition('.py')
     logger = logging.getLogger(library)
-    logger.setLevel(logging.INFO)
+    
+    # Get log level from environment variable, default to INFO
+    log_level_name = os.getenv('LOG_LEVEL', 'INFO').upper()
+    log_level = getattr(logging, log_level_name, logging.INFO)
+    logger.setLevel(log_level)
 
     if not logger.handlers:
         # create console handler
         console_handler = logging.StreamHandler()
-        console_handler.setLevel(logging.INFO)
+        console_handler.setLevel(log_level)
         console_handler.setFormatter(ConsoleFormatter())
 
         # specify that the log file path is the same as `main.py` file path
